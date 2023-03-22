@@ -1,0 +1,21 @@
+#------------------------------
+# result
+#------------------------------
+"""Definiçoes de campos da coleção cliente"""
+type ApiExistResult {
+    field: String
+    exists: Boolean
+    value: String
+}
+
+type ApiChangeResult {
+    """Identificador do documento"""
+    _id: ID
+
+    """Informações de sistema sobre o documento"""
+    _info: ApiInfo
+
+    """Dados atualizados por usuários"""
+    values: Any
+}
+

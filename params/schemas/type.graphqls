@@ -1,0 +1,71 @@
+#------------------------------
+# type
+#------------------------------
+type ApiPaginator {
+    length:Int
+    limit:Int
+    offset:Int
+}
+
+type ApiCursorSearch {
+    """Indica se há mais itens para paginar para frente"""
+    nextPage: Boolean
+
+    """Indica se há mais itens para paginar para trás"""
+    previousPage: Boolean
+}
+
+type ApiPageInfo {
+    has: ApiCursorSearch
+    total:Int
+    size:Int
+    page:Int
+}
+
+type ApiHistory {
+    """Indentificador de integridade do documento"""
+    checksum: String
+
+    """Data da criação do documento"""
+    createdAt: Time
+
+    """Identificador da ação realizada no documento"""
+    log:String
+}
+
+"""Opções de campos retornados em atualização de estado"""
+type ApiInfo {
+    """Data da alteração do documento"""
+    changedAt: Time
+
+    """Indentificador de integridade do documento"""
+    checksum: String
+
+    """Data da criação do documento"""
+    createdAt: Time
+
+    """Registra as 10 interações mais recentes realizadas no documento. Para obter todas as interações realizadas no documento é necessário consultar o log da aplicação"""
+    history: [ApiHistory]
+
+    #TODO:: Implementar AccountInput
+    #"""Nome único universal de identificação de documento"""
+    #namespace: Namespace
+
+    """Identificador do criador/dono do recurso"""
+    owner: String
+
+    """Versão do documento"""
+    version: Int
+}
+
+type TextValue {
+    text: String!
+    value: Float!
+}
+
+type Distance {
+    distance : TextValue
+    duration : TextValue
+}
+
+

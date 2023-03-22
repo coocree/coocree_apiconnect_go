@@ -1,0 +1,11 @@
+#------------------------------
+# input
+#------------------------------
+"""Lista de opções de status de documento para consulta"""
+input StatusEnabledDisabledSearchInput {
+    """Indica se o documento está habilitado para uso"""
+    ENABLED: StatusIncludeNotIncludeEnum
+
+    """Indica se o documento está desabilitado para uso"""
+    DISABLED: StatusIncludeNotIncludeEnum
+}

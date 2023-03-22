@@ -1,0 +1,93 @@
+#------------------------------
+# input
+#------------------------------
+input ApiPaginationInput {
+    size: Int!
+    page: Int!
+}
+
+input ApiDateStartSearchInput {
+    date: Time!
+    operator: DateStartComparisonOperators!
+}
+
+input ApiDateEndSearchInput {
+    date: Time!
+    operator: DateEndComparisonOperators!
+}
+
+input ApiDateOptionsInput {
+    A_start: ApiDateStartSearchInput!
+    B_end: ApiDateEndSearchInput
+}
+
+"""Filtre documentos por tipos de dados"""
+input ApiTypesSearchInput {
+    """Texto para realizar consulta"""
+    text: String
+
+    """Texto para realizar consulta"""
+    integer: Int
+
+    float: Float
+}
+
+"""Filtre documentos por identificadores"""
+input ApiIdentifiersSearchInput {
+    """Filtre documentos por uma lista de identificadores"""
+    ids: [ID!]
+}
+
+"""Filtre documentos por posicionamento do cursor de busca"""
+input ApiPositionSearchInput {
+    """Retorna os primeiros n elementos da lista."""
+    first: Int
+
+    """Retorna os últimos n elementos da lista"""
+    last: Int
+}
+
+"""Filtre documentos criados ou atualizados entre datas especificadas"""
+input ApiDateSearchInput {
+    created: ApiDateOptionsInput
+    updated: ApiDateOptionsInput
+}
+
+input ApiSearchRegexInput {
+    pattern: String!
+    options: String!
+}
+
+input TextValueInput {
+    text: String!
+    value: Int!
+}
+
+
+#input AdditionalContactInput {
+#    """Endereços do entregador"""
+#    address: AddressInput
+
+#    """Email do entregador"""
+#    email: Email
+
+#    """Número de telefone do entregador"""
+#    phone: PhoneInput
+#}
+
+#type ApiFindAddress {
+#    postalCode: String
+#    state: String
+#    city: String
+#    street: String
+#    neighborhood: String
+#}
+
+
+#type ApiFindAddressResponse {
+#    success: Boolean
+#    """Dados retornado do servidor"""
+#    result: ApiFindAddress
+#}
+
+

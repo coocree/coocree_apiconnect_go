@@ -1,0 +1,14 @@
+#------------------------------
+# response
+#------------------------------
+type ApiExistResponse {
+    success: Boolean!
+    result: ApiExistResult!
+    elapsedTime: String!
+}
+
+type ApiChangeResponse {
+    success: Boolean!
+    result: ApiChangeResult!
+    elapsedTime: String!
+}

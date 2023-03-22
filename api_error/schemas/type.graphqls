@@ -1,0 +1,13 @@
+scalar Any
+scalar Map
+scalar Time
+scalar Upload
+
+type ApiErrorType {
+    createdAt: String!
+    message: [String!]!
+    module: String!
+    path: String!
+    type: String
+    variable: Map
+}

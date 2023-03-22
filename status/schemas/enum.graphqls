@@ -1,0 +1,147 @@
+#------------------------------
+# enum
+#------------------------------
+"""Opções de direções de ordenação"""
+enum StatusDirectionSortEnum {
+    """Especifica uma ordem crescente para um determinado argumento orderBy"""
+    ASC
+    """Especifica uma ordem decrescente para um determinado argumento orderBy"""
+    DESC
+}
+
+"""Opções de status de alteração no documento"""
+enum StatusEnabledDisabledEnum {
+    """Não definido"""
+    UNDEFINED
+
+    """Indica que o documento está ativo"""
+    ENABLED
+
+    """Indica se o documento está desabilitado para uso"""
+    DISABLED
+}
+
+"""Opção de status de inclusão de campos"""
+enum StatusIncludeEnum {
+    """Indica que o campo selecionado deve ser incluído na consulta"""
+    INCLUDE
+}
+
+
+"""Opção de status de inclusão de campos"""
+enum StatusYesNoEnum {
+    YES
+    NO
+}
+
+"""Opção de status de inclusão ou não inclusão de campos"""
+enum StatusIncludeNotIncludeEnum {
+    """Indica que o campo selecionado deve ser incluído na consulta"""
+    INCLUDE
+
+    """Indica que o campo selecionado não deve ser incluído na consulta"""
+    NO_INCLUDE
+}
+
+"""Opções de status de avaliação"""
+enum StatusEvaluationEnum {
+    """Não definido"""
+    UNDEFINED
+
+    """Indica que não está em avaliação (default)"""
+    NO_EVALUATION
+
+    """Não foi enviado umagem dos documentos necessários"""
+    NO_DOCUMENTS
+
+    """Aguardando aprovação"""
+    WAITING_APPROVAL
+
+    """Indica que está em avaliação"""
+    EVALUATION
+
+    """Foi aprovado"""
+    APPROVED
+
+    """Foi rejeitado"""
+    REJECTED
+}
+
+"""Status de verificação de dados"""
+enum StatusVerifiedEnum {
+    """Não definido"""
+    UNDEFINED
+
+    """Aguardando verificação"""
+    AWAITING_VERIFICATION
+
+    """Aguardando documentação"""
+    AWAITING_DOCUMENTATION
+
+    """Aprovado"""
+    APPROVED
+
+    """Recusado"""
+    DECLINED
+}
+
+"""Regras de privacidade aplicados as dados"""
+enum StatusPrivacyEnum {
+    """Não definido"""
+    UNDEFINED
+
+    """Qualquer pessoa dentro ou fora da plataforma pode visualizar"""
+    PUBLIC
+
+    """Somentes pessoas/usuários dentro da plataforma pode visualizar"""
+    PRIVATE
+
+    """Somente eu e administradores da plataforma pode visualizar"""
+    PROTECTED
+
+    """Somente pessoas diretamente conectadas comigo"""
+    DIRECT_CONNECTIONS
+
+    """Somente pessoas inscritas em uma lista personalizada"""
+    CUSTOM_LISTS
+}
+
+"""Opções de prioridade"""
+enum StatusPriorityEnum {
+    """Não definido"""
+    UNDEFINED
+
+    """Nenhuma"""
+    NONE
+
+    """Baixa"""
+    LOW
+
+    """Normal"""
+    NORMAL
+
+    """Alta"""
+    HIGH
+
+    """Muito alta"""
+    VERY_HIGH
+}
+
+
+"""Opções de urgência"""
+enum StatusUrgencyEnum {
+    """Não definido"""
+    UNDEFINED
+
+    """Nenhuma"""
+    NONE
+
+    """Normal"""
+    NORMAL
+
+    """Urgente"""
+    URGENT
+
+    """Muito urgente"""
+    VERY_URGENT
+}

@@ -1,0 +1,64 @@
+#------------------------------
+# enum
+#------------------------------
+"""Opção de status para clonagem"""
+enum StatusCloneTypeEnum {
+    """Projeto público, pode ser clonado"""
+    public
+
+    """Projeto privado, não pode ser clonado"""
+    private
+}
+
+enum ComparisonQueryOperators {
+    """Igual (==) o valor especificado"""
+    EQUAL_eq
+
+    """Maior que (>) o valor especificado"""
+    GREATER_THAN_gt
+
+    """Maior ou igual (>=) o valor especificado"""
+    GREATER_THAN_OR_EQUAL_gte
+
+    """O valor está no array especificado"""
+    IN_ARRAY_in
+
+    """Menor que (<) o valor especificado"""
+    LESS_THAN_lt
+
+    """Menor ou igual (<=) o valor especificado"""
+    LESS_THAN_OR_EQUAL_lte
+
+    """Não igual (!=) o valor especificado"""
+    NOT_EQUAL_ne
+
+    """O valor não está no array especificado ou não existe"""
+    NOT_IN_ARRAY_nin
+}
+
+enum DateEndComparisonOperators {
+    """Igual (==) o valor especificado"""
+    EQUAL_eq
+
+    """Menor que (<) o valor especificado"""
+    LESS_THAN_lt
+
+    """Menor ou igual (<=) o valor especificado"""
+    LESS_THAN_OR_EQUAL_lte
+}
+
+enum DateStartComparisonOperators {
+    """Igual (==) o valor especificado"""
+    EQUAL_eq
+
+    """Maior que (>) o valor especificado"""
+    GREATER_THAN_gt
+
+    """Maior ou igual (>=) o valor especificado"""
+    GREATER_THAN_OR_EQUAL_gte
+}
+
+enum CursorPositionEnum {
+    previous
+    next
+}
