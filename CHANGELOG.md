@@ -20,3 +20,6 @@
 
 ### 1.0.6
 * Verificação de erros no adaptador mongo e Mysql
+
+### 1.0.7
+* Alterado nome Mysql

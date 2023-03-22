@@ -6,19 +6,19 @@ import (
 	_ "github.com/go-sql-driver/mysql" // Importa o driver MySQL sem atribuir um nome de pacote
 )
 
-// MySQLDB é uma estrutura que contém um cliente *sql.DB.
-type MySQLDB struct {
+// MysqlDB é uma estrutura que contém um cliente *sql.DB.
+type MysqlDB struct {
 	client *sql.DB
 }
 
 // NewDB cria uma nova instância do adaptador MySQL e retorna um ponteiro para ela.
 // A função recebe uma string de conexão (DSN) como argumento e retorna um erro, se houver algum.
-func NewDB(dsn string) (*MySQLDB, error) {
+func NewDB(dsn string) (*MysqlDB, error) {
 	client, err := connect(dsn)
 	if err != nil {
 		return nil, err
 	}
-	return &MySQLDB{
+	return &MysqlDB{
 		client: client,
 	}, nil
 }
@@ -44,7 +44,7 @@ func connect(dsn string) (*sql.DB, error) {
 
 // Close fecha a conexão com o banco de dados MySQL.
 // Retorna um erro, se houver algum.
-func (db *MySQLDB) Close() error {
+func (db *MysqlDB) Close() error {
 	// Fecha a conexão com o cliente MySQL
 	return db.client.Close()
 }
