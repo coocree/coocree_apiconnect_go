@@ -17,3 +17,6 @@
 
 ### 1.0.5
 * Implementado adaptadores mongo e mysql
+
+### 1.0.6
+* Verificação de erros no adaptador mongo e Mysql
