@@ -11,3 +11,6 @@
 
 ### 1.0.3
 * Adicionado o pacotes api_error, api_security, status, params
+
+### 1.0.4
+* Alterado estrutura de pacotes
