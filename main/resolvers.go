@@ -675,7 +675,7 @@ func renderServiceNotExist(item MutationQueryFileModel, pathFilename string) {
 	_, _ = fmt.Fprint(buffer, "package "+item.Package+"\n\n")
 	_, _ = fmt.Fprint(buffer, "import (\n")
 	_, _ = fmt.Fprint(buffer, "\t\"coocree_kdl_go_apiconnect/graph/model\"\n")
-	_, _ = fmt.Fprint(buffer, "\t\"coocree_kdl_go_apiconnect/modules/api\"\n")
+	_, _ = fmt.Fprint(buffer, "\t\"coocree_kdl_go_apiconnect/modules/api_connect\"\n")
 	if item.hasUpload {
 		_, _ = fmt.Fprint(buffer, "\t\"github.com/99designs/gqlgen/graphql\"\n")
 	}

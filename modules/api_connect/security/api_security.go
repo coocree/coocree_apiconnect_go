@@ -1,4 +1,4 @@
-package api_security
+package security
 
 import (
 	"crypto/sha1"
