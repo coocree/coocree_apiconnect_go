@@ -5,3 +5,6 @@
 
 ### 1.0.1
 * Alterado o nome do pacote para github.com/coocree/coocree_apiconnect_go
+
+### 1.0.2
+* Alterado pacote generate para main
