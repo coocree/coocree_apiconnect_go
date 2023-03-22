@@ -1,4 +1,4 @@
-module coocree_apiconnect_go
+module github.com/coocree/coocree_apiconnect_go
 
 go 1.19
 
