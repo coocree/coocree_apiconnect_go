@@ -23,3 +23,6 @@
 
 ### 1.0.7
 * Alterado nome Mysql
+
+### 1.0.8
+* Implementado mysql client

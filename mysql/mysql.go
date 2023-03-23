@@ -11,6 +11,11 @@ type MysqlDB struct {
 	client *sql.DB
 }
 
+// Client retorna o cliente *sql.DB armazenado na estrutura MysqlDB.
+func (db *MysqlDB) Client() *sql.DB {
+	return db.client
+}
+
 // NewDB cria uma nova instância do adaptador MySQL e retorna um ponteiro para ela.
 // A função recebe uma string de conexão (DSN) como argumento e retorna um erro, se houver algum.
 func NewDB(dsn string) (*MysqlDB, error) {
