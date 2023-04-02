@@ -273,8 +273,8 @@ func createResoversImport(hasUpload bool) *bytes.Buffer {
 
 	_, _ = fmt.Fprint(buffer, "package graph\n\n")
 	_, _ = fmt.Fprint(buffer, "import (\n")
-	_, _ = fmt.Fprint(buffer, "\t\"coocree_kdl_go_apiconnect/graph/model\"\n")
 	_, _ = fmt.Fprint(buffer, "\t\"context\"\n")
+	_, _ = fmt.Fprint(buffer, "\t\"coocree_kdl_go_apiconnect/graph/model\"\n")
 
 	var listPaths []string
 	for _, fileModel := range listMutationQueryFile {
@@ -288,6 +288,7 @@ func createResoversImport(hasUpload bool) *bytes.Buffer {
 	sort.Strings(listPaths)
 
 	for _, path := range listPaths {
+		fmt.Println(path + " - " + path[1:])
 		// adiciona as importações dos arquivos de modelo de cada caminho
 		_, _ = fmt.Fprint(buffer, "\t\"coocree_kdl_go_apiconnect/"+path+"\"\n")
 	}
@@ -393,19 +394,31 @@ func processResponse(values []string, pathFile string) {
 func renderActionArgs(args []ArgModel) string {
 	// Cria um slice vazio para armazenar os resultados
 	var result []string
+
+	// Ordenando o slice de ArgModel pelo campo Name
+	sort.Slice(args, func(i, j int) bool {
+		return args[i].Name < args[j].Name
+	})
+
 	// Itera sobre cada modelo de argumento
 	for _, arg := range args {
 		// Chama a função renderParamModel para renderizar o modelo de argumento como uma string
 		result = append(result, renderParamModel(arg))
 	}
-	// Junta todas as strings geradas com uma vírgula e retorna o resultado final
-	return strings.Join(result, ", ")
+
+	resultStr := strings.Join(result, ", ")
+
+	if len(resultStr) > 0 {
+		// Junta todas as strings geradas com uma vírgula e retorna o resultado final
+		return ", " + strings.Join(result, ", ")
+	}
+	return ""
 }
 
 // Função que recebe uma lista de modelos de argumentos e retorna uma string representando a lista de argumentos limpos para uma função de ação
 func renderArgsClean(args []ArgModel) string {
 	// Cria um slice com o valor "ctx" como primeiro elemento
-	result := []string{"ctx"}
+	result := []string{"r,ctx"}
 	// Itera sobre cada modelo de argumento
 	for _, arg := range args {
 		// Chama a função createParamClean para criar um parâmetro limpo a partir do nome do argumento
@@ -433,6 +446,34 @@ func renderParamModel(arg ArgModel) string {
 	}
 	// Concatena a palavra resultante com o tipo formatado do argumento
 	return result + " " + renderTypeModel(arg)
+}
+
+// TODO::Implementar a função renderResolverFile
+func renderResolverFile() {
+	/**
+	package graph
+
+	import (
+		"github.com/coocree/coocree_apiconnect_go/mongo"
+		"github.com/coocree/coocree_apiconnect_go/mysql"
+	)
+
+	// This file will not be regenerated automatically.
+	//
+	// It serves as dependency injection for your app, add any dependencies you require here.
+	type Resolver struct {
+		MongoDB *mongo.MongoDB
+		MysqlDB *mysql.MysqlDB
+	}
+
+	func (r *Resolver) GetMongoDB() *mongo.MongoDB {
+		return r.MongoDB
+	}
+
+	func (r *Resolver) GetMysqlDB() *mysql.MysqlDB {
+		return r.MysqlDB
+	}
+	*/
 }
 
 // Função que renderiza o arquivo "schema.resolvers.go" com as implementações das resolvers geradas para as mutations e queries
@@ -475,12 +516,16 @@ func renderResolver() {
 		// Verifica se o tipo da ação é query ou mutation
 		if actionModel.Type == "query" {
 			// Renderiza a implementação da resolver para a query
-			_, _ = fmt.Fprint(buffer, "func (r *queryResolver) "+name+" (ctx context.Context, "+renderActionArgs(actionModel.Args)+") ("+renderResponse(actionModel.Response)+", error) {\n")
+			_, _ = fmt.Fprint(buffer, "func (r *queryResolver) "+name+" (ctx context.Context, "+renderActionArgs(actionModel.Args)+") ("+renderResponse(actionModel)+", error) {\n")
 			_, _ = fmt.Fprint(buffer, "\treturn "+actionModel.Package+"."+name+"Query("+renderArgsClean(actionModel.Args)+")\n")
 		} else if actionModel.Type == "mutation" {
 			// Renderiza a implementação da resolver para a mutation
-			_, _ = fmt.Fprint(buffer, "func (r *mutationResolver) "+name+" (ctx context.Context, "+renderActionArgs(actionModel.Args)+") ("+renderResponse(actionModel.Response)+", error) {\n")
+			_, _ = fmt.Fprint(buffer, "func (r *mutationResolver) "+name+" (ctx context.Context, "+renderActionArgs(actionModel.Args)+") ("+renderResponse(actionModel)+", error) {\n")
 			_, _ = fmt.Fprint(buffer, "\treturn "+actionModel.Package+"."+name+"Mutation("+renderArgsClean(actionModel.Args)+")\n")
+		} else if actionModel.Type == "subscription" {
+			// Renderiza a implementação da resolver para a subscription
+			_, _ = fmt.Fprint(buffer, "func (r *subscriptionResolver) "+name+" (ctx context.Context, "+renderActionArgs(actionModel.Args)+") ("+renderResponse(actionModel)+", error) {\n")
+			_, _ = fmt.Fprint(buffer, "\treturn "+actionModel.Package+"."+name+"Subscription("+renderArgsClean(actionModel.Args)+")\n")
 		}
 		// Fecha a função
 		_, _ = fmt.Fprint(buffer, "}\n")
@@ -489,11 +534,17 @@ func renderResolver() {
 	// Renderiza as funções Mutation e Query, que retornam implementações das resolvers para os tipos MutationResolver e QueryResolver, respectivamente
 	_, _ = fmt.Fprint(buffer, "// Mutation returns MutationResolver implementation.\n")
 	_, _ = fmt.Fprint(buffer, "func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }\n\n")
+
 	_, _ = fmt.Fprint(buffer, "// Query returns QueryResolver implementation.\n")
 	_, _ = fmt.Fprint(buffer, "func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }\n\n")
+
+	_, _ = fmt.Fprint(buffer, "// Subscription returns QuerySubscription implementation.\n")
+	_, _ = fmt.Fprint(buffer, "func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }\n\n")
+
 	// Renderiza as structs mutationResolver e queryResolver, que armazenam um ponteiro para o Resolver
 	_, _ = fmt.Fprint(buffer, "type mutationResolver struct{ *Resolver }\n")
 	_, _ = fmt.Fprint(buffer, "type queryResolver struct{ *Resolver }\n")
+	_, _ = fmt.Fprint(buffer, "type subscriptionResolver struct{ *Resolver }\n")
 
 	// Escreve o conteúdo do buffer no arquivo "schema.resolvers.go"
 	if err := os.WriteFile("graph/schema.resolvers.go", buffer.Bytes(), 0644); err != nil {
@@ -502,28 +553,60 @@ func renderResolver() {
 
 	// Imprime no console uma mensagem indicando que a renderização das resolvers foi concluída
 	fmt.Println("RenderResolver")
+
+	renderResolverFile()
 }
 
 // A função `renderResponse` recebe uma string contendo o nome do tipo de resposta de uma função GraphQL e retorna uma string formatada
 // que representa o tipo de resposta no código Go.
-func renderResponse(response string) string {
+func renderResponse(actionModel ActionModel) string {
 	// Remove caracteres especiais do nome do tipo de resposta
-	response = re9.ReplaceAllString(response, "")
+	response := re9.ReplaceAllString(actionModel.Response, "")
 	// Divide o nome do tipo em uma lista de palavras
 	nameSplit := camelcase.Split(response)
 	result := ""
 	// Itera sobre as palavras do nome do tipo
 	for _, namePart := range nameSplit {
 		// Verifica se a palavra é "id" ou "api" e se o nome do tipo tem mais de uma palavra. Se for o caso, converte a palavra para maiúscula
-		if ((namePart == "id" || namePart == "Id") || (namePart == "api" || namePart == "Api")) && len(nameSplit) > 1 {
-			result += strings.ToUpper(namePart)
-		} else {
-			result += namePart
-		}
+		//if ((namePart == "id" || namePart == "Id") || (namePart == "api" || namePart == "Api")) && len(nameSplit) > 1 {
+		//	result += strings.ToUpper(namePart)
+		//} else {
+		result += namePart
+		//}
+	}
+
+	if actionModel.Type == "subscription" {
+		return "<-chan *model." + result
 	}
 	// Retorna o tipo de resposta formatado com o prefixo "*model."
 	return "*model." + result
 }
+
+// A função `renderServiceInterface` é responsável por renderizar o arquivo de interface de serviço.
+/*func renderServiceInterface(item MutationQueryFileModel) {
+	// Cria o caminho para o arquivo de interface de serviço
+	pathFilename := "modules/api_connect/service_interface.go"
+
+	buffer := bytes.NewBuffer(nil)
+
+	_, _ = fmt.Fprint(buffer, "package api_connect\n\n")
+	_, _ = fmt.Fprint(buffer, "import (\n")
+	_, _ = fmt.Fprint(buffer, "\t\"github.com/coocree/coocree_apiconnect_go/mongo\"\n")
+	_, _ = fmt.Fprint(buffer, "\t\"github.com/coocree/coocree_apiconnect_go/mysql\"\n")
+	_, _ = fmt.Fprint(buffer, "\t)\n\n")
+
+	_, _ = fmt.Fprint(buffer, "type IResolver interface {\n")
+	_, _ = fmt.Fprint(buffer, "\tGetMongoDB() *mongo.MongoDB\n")
+	_, _ = fmt.Fprint(buffer, "\tGetMysqlDB() *mysql.MysqlDB\n")
+	_, _ = fmt.Fprint(buffer, "}")
+
+	if err := os.WriteFile(pathFilename, buffer.Bytes(), 0644); err != nil {
+		panic(err)
+	}
+
+	// Imprime no console uma mensagem indicando que a renderização dos serviços foi concluída
+	fmt.Println("RenderServiceInterface")
+}*/
 
 // A função `renderService` é responsável por renderizar o arquivo de serviço de cada ação no formato correto.
 func renderService() {
@@ -539,6 +622,7 @@ func renderService() {
 		} else {
 			renderServiceNotExist(item, pathFilename)
 		}
+		//renderServiceInterface(item)
 	}
 	// Imprime no console uma mensagem indicando que a renderização dos serviços foi concluída
 	fmt.Println("RenderService")
@@ -549,32 +633,86 @@ func renderService() {
 // Retorna um buffer de bytes com o código gerado.
 func renderServiceItem(buffer *bytes.Buffer, actionModel ActionModel, nameMethod string) *bytes.Buffer {
 	// Obtém o modelo de resultado a partir do nome do modelo de resposta
-	resultModel := listResponseModel[actionModel.Response]
+	//resultModel := listResponseModel[actionModel.Response]
+
+	actionModelName := fistUpperCase(actionModel.Name)
+
 	// Gera a declaração do método e os valores de retorno
-	_, _ = fmt.Fprint(buffer, "func "+nameMethod+"(ctx context.Context, "+renderActionArgs(actionModel.Args)+") ("+renderResponse(actionModel.Response)+", error) {\n")
+	_, _ = fmt.Fprint(buffer, "func "+nameMethod+"(r api_connect.IResolver, ctx context.Context"+renderActionArgs(actionModel.Args)+") ("+renderResponse(actionModel)+", error) {\n")
+
+	// Adiciona um timer para medir o tempo de execução
+	_, _ = fmt.Fprint(buffer, "\t_timeStart := time.Now()\n")
+
+	// Inicializa a variável que indicará se a ação foi executada com sucesso
+	_, _ = fmt.Fprint(buffer, "\t_success := true\n")
+
+	// Inicializa a variável que indicará se a ação teve um erro
+	_, _ = fmt.Fprint(buffer, "\t_error := \"\"\n\n")
+
 	// Adiciona um panic para indicar que o método ainda não foi implementado
 	_, _ = fmt.Fprint(buffer, "\tpanic(fmt.Errorf(\"not implemented\"))\n\n")
-	// Adiciona um timer para medir o tempo de execução
-	_, _ = fmt.Fprint(buffer, "\ttimeStart := time.Now()\n")
-	// Inicializa a variável que indicará se a ação foi executada com sucesso
-	_, _ = fmt.Fprint(buffer, "\tsuccess := false\n")
-	// Verifica o tipo de resultado a partir do modelo de resultado obtido
-	_, _ = fmt.Fprint(buffer, resultCheckType(resultModel))
-	// Gera a declaração do objeto de resposta
-	_, _ = fmt.Fprint(buffer, "\tresponse := "+createParamsResponse(actionModel.Response)+"{\n")
-	// Adiciona o resultado da ação ao objeto de resposta
-	if resultModel.isList {
-		_, _ = fmt.Fprint(buffer, "\t\tResult:      result,\n")
-	} else {
-		_, _ = fmt.Fprint(buffer, "\t\tResult:      &result,\n")
+
+	// Adiciona um comentário indicando que o método ainda não foi implementado
+	_, _ = fmt.Fprint(buffer, "\t//TODO::necessário implementar o método service."+actionModelName+"()\n")
+
+	// Adiciona a declaração do ação default
+	if actionModel.Type == "query" {
+		if len(actionModel.Args) == 1 {
+			_, _ = fmt.Fprint(buffer, "\t_result, err := service."+actionModelName+"(r, ctx, filter)\n")
+		} else {
+			_, _ = fmt.Fprint(buffer, "\t_result, err := service."+actionModelName+"(r, ctx)\n")
+		}
+	} else if actionModel.Type == "mutation" || actionModel.Type == "subscription" {
+		if len(actionModel.Args) == 1 {
+			_, _ = fmt.Fprint(buffer, "\t_result, err := service."+actionModelName+"(r, ctx, input)\n")
+		} else if len(actionModel.Args) == 2 {
+			_, _ = fmt.Fprint(buffer, "\t_result, err := service."+actionModelName+"(r, ctx, filter, input)\n")
+		} else {
+			_, _ = fmt.Fprint(buffer, "\t_result, err := service."+actionModelName+"(r, ctx)\n")
+		}
 	}
-	// Adiciona a informação sobre o sucesso da ação ao objeto de resposta
-	_, _ = fmt.Fprint(buffer, "\t\tSuccess:     success,\n")
-	// Adiciona a informação sobre o tempo de execução da ação ao objeto de resposta
-	_, _ = fmt.Fprint(buffer, "\t\tElapsedTime: time.Since(timeStart).String(),\n")
+
+	// Verifica o tipo de resultado a partir do modelo de resultado obtido
+	//_, _ = fmt.Fprint(buffer, resultCheckType(resultModel))
+
+	// Adiciona a verificação de erro
+	_, _ = fmt.Fprint(buffer, "\tif err != nil {\n")
+	_, _ = fmt.Fprint(buffer, "\t\t_success = false\n")
+	_, _ = fmt.Fprint(buffer, "\t\t_error = fmt.Sprintf(\"%v\", err.Error())\n")
 	_, _ = fmt.Fprint(buffer, "\t}\n")
-	// Retorna o objeto de resposta e um erro, caso ocorra
-	_, _ = fmt.Fprint(buffer, "\treturn &response, nil\n")
+
+	// Gera a declaração do objeto de resposta
+	_, _ = fmt.Fprint(buffer, "\t_response := "+createParamsResponse(actionModel.Response)+"{\n")
+
+	// Adiciona o resultado da ação ao objeto de resposta
+	/*if resultModel.isList {
+		_, _ = fmt.Fprint(buffer, "\t\tResult:      _result,\n")
+	} else {
+		_, _ = fmt.Fprint(buffer, "\t\tResult:      &_result,\n")
+	}*/
+
+	// Adiciona a informação sobre o erro da ação ao objeto de resposta
+	_, _ = fmt.Fprint(buffer, "\t\tError: \t\t &_error,\n")
+
+	// Adiciona a informação sobre o sucesso da ação ao objeto de resposta
+	_, _ = fmt.Fprint(buffer, "\t\tResult:      _result,\n")
+
+	// Adiciona a informação sobre o sucesso da ação ao objeto de resposta
+	_, _ = fmt.Fprint(buffer, "\t\tSuccess:     _success,\n")
+	// Adiciona a informação sobre o tempo de execução da ação ao objeto de resposta
+	_, _ = fmt.Fprint(buffer, "\t\tElapsedTime: time.Since(_timeStart).String(),\n")
+	_, _ = fmt.Fprint(buffer, "\t}\n")
+
+	// Verifica se é do tipo subscription para configurar retorno
+	if actionModel.Type == "subscription" {
+		_, _ = fmt.Fprint(buffer, "\tch := make(chan *model.KdldnTimeResponse)\n")
+		_, _ = fmt.Fprint(buffer, "\tch <- &_response\n")
+		_, _ = fmt.Fprint(buffer, "\treturn ch, nil\n")
+	} else {
+		// Retorna o objeto de resposta e um erro, caso ocorra
+		_, _ = fmt.Fprint(buffer, "\treturn &_response, nil\n")
+	}
+
 	_, _ = fmt.Fprint(buffer, "}\n\n")
 
 	return buffer
@@ -586,7 +724,7 @@ func renderServiceExist(fileByte []byte, item MutationQueryFileModel, pathFilena
 	var regexPackageImport = regexp.MustCompile(`package[\s\S]*?\)`)
 
 	// Expressão regular para capturar todos os métodos da struct que retornam o tipo "response".
-	var regexGetAllMethods = regexp.MustCompile(`(func\s(\w.+?)\([\s\S].*{)([\s\S]+?return\s&response[\s\S]+?)}`)
+	var regexGetAllMethods = regexp.MustCompile(`(func\s(\w.+?)\([\s\S].*{)([\s\S]+?return\s&_response[\s\S]+?)}`)
 
 	// Cria um buffer para armazenar o conteúdo do arquivo.
 	buffer := bytes.NewBuffer(nil)
@@ -620,15 +758,16 @@ func renderServiceExist(fileByte []byte, item MutationQueryFileModel, pathFilena
 		name := fistUpperCase(actionModel.Name)
 		nameType := fistUpperCase(item.Type)
 		nameMethod := name + nameType
+		actionModel.Type = item.Type
 
 		// Expressão regular para capturar o método correspondente à ação atual.
-		var regexGetMethods = regexp.MustCompile(`(func\s(` + nameMethod + `)[\s\S]+?{)([\s\S]+?return\s&response[\s\S]+?)}`)
+		var regexGetMethods = regexp.MustCompile(`(func\s(` + nameMethod + `)[\s\S]+?{)([\s\S]+?return\s&_response[\s\S]+?)}`)
 
 		// Captura o método correspondente à ação atual.
 		listMatchMethods := regexGetMethods.FindStringSubmatch(content)
 
 		// Gera a declaração da função.
-		method := "func " + nameMethod + "(ctx context.Context, " + renderActionArgs(actionModel.Args) + ") (" + renderResponse(actionModel.Response) + ", error) {\n"
+		method := "func " + nameMethod + "(r api_connect.IResolver, ctx context.Context" + renderActionArgs(actionModel.Args) + ") (" + renderResponse(actionModel) + ", error) {\n"
 
 		// Verifica se o método correspondente à ação atual já está implementado.
 		isSimilarMethod := false
@@ -653,7 +792,7 @@ func renderServiceExist(fileByte []byte, item MutationQueryFileModel, pathFilena
 			_, _ = fmt.Fprint(buffer, "// O código abaixo foi alterado e precisa ser avaliado:\n")
 			_, _ = fmt.Fprint(buffer, "// - Ao alterar parâmetros da query ou mutation graphql, precisa ser revisado.\n")
 			_, _ = fmt.Fprint(buffer, "------------------------------------------------------------**/\n")
-			_, _ = fmt.Fprint(buffer, "func "+nameMethod+"(ctx context.Context, "+renderActionArgs(actionModel.Args)+") ("+renderResponse(actionModel.Response)+", error) {\n")
+			_, _ = fmt.Fprint(buffer, "func "+nameMethod+"(r api_connect.IResolver, ctx context.Context"+renderActionArgs(actionModel.Args)+") ("+renderResponse(actionModel)+", error) {\n")
 			_, _ = fmt.Fprint(buffer, listMatchMethods[3]+"\n")
 			_, _ = fmt.Fprint(buffer, "}\n\n")
 		}
@@ -691,26 +830,89 @@ func renderServiceNotExist(item MutationQueryFileModel, pathFilename string) {
 	for _, actionModel := range item.Actions {
 		name := fistUpperCase(actionModel.Name)
 		nameType := fistUpperCase(item.Type)
-		resultModel := listResponseModel[actionModel.Response]
+		nameMethod := name + nameType
+		actionModel.Type = item.Type
+		//resultModel := listResponseModel[actionModel.Response]
+		actionModelName := fistUpperCase(actionModel.Name)
 
-		_, _ = fmt.Fprint(buffer, "func "+name+nameType+"(ctx context.Context, "+renderActionArgs(actionModel.Args)+") ("+renderResponse(actionModel.Response)+", error) {\n")
+		// Gera a declaração do método e os valores de retorno
+		_, _ = fmt.Fprint(buffer, "func "+nameMethod+"(r api_connect.IResolver, ctx context.Context"+renderActionArgs(actionModel.Args)+") ("+renderResponse(actionModel)+", error) {\n")
+
+		// Adiciona um timer para medir o tempo de execução
+		_, _ = fmt.Fprint(buffer, "\t_timeStart := time.Now()\n")
+
+		// Inicializa a variável que indicará se a ação foi executada com sucesso
+		_, _ = fmt.Fprint(buffer, "\t_success := true\n")
+
+		// Inicializa a variável que indicará se a ação teve um erro
+		_, _ = fmt.Fprint(buffer, "\t_error := \"\"\n\n")
+
+		// Adiciona um panic para indicar que o método ainda não foi implementado
 		_, _ = fmt.Fprint(buffer, "\tpanic(fmt.Errorf(\"not implemented\"))\n\n")
-		_, _ = fmt.Fprint(buffer, "\ttimeStart := time.Now()\n")
-		_, _ = fmt.Fprint(buffer, "\tsuccess := false\n")
 
-		_, _ = fmt.Fprint(buffer, resultCheckType(resultModel))
-		_, _ = fmt.Fprint(buffer, "\tresponse := "+createParamsResponse(actionModel.Response)+"{\n")
+		// Adiciona um comentário indicando que o método ainda não foi implementado
+		_, _ = fmt.Fprint(buffer, "\t//TODO::necessário implementar o método service."+actionModelName+"()\n")
 
-		if resultModel.isList {
+		// Adiciona a declaração do ação default
+		//_, _ = fmt.Fprint(buffer, resultCheckType(resultModel))
+		//_, _ = fmt.Fprint(buffer, "\t_result, err := service."+actionModelName+"(r, ctx, input)\n")
+
+		// Adiciona a declaração do ação default
+		if actionModel.Type == "query" {
+			if len(actionModel.Args) == 1 {
+				_, _ = fmt.Fprint(buffer, "\t_result, err := service."+actionModelName+"(r, ctx, filter)\n")
+			} else {
+				_, _ = fmt.Fprint(buffer, "\t_result, err := service."+actionModelName+"(r, ctx)\n")
+			}
+		} else if actionModel.Type == "mutation" || actionModel.Type == "subscription" {
+			if len(actionModel.Args) == 1 {
+				_, _ = fmt.Fprint(buffer, "\t_result, err := service."+actionModelName+"(r, ctx, input)\n")
+			} else if len(actionModel.Args) == 2 {
+				_, _ = fmt.Fprint(buffer, "\t_result, err := service."+actionModelName+"(r, ctx, filter, input)\n")
+			} else {
+				_, _ = fmt.Fprint(buffer, "\t_result, err := service."+actionModelName+"(r, ctx)\n")
+			}
+
+		}
+
+		// Adiciona a verificação de erro
+		_, _ = fmt.Fprint(buffer, "\tif err != nil {\n")
+		_, _ = fmt.Fprint(buffer, "\t\t_success = false\n")
+		_, _ = fmt.Fprint(buffer, "\t\t_error = fmt.Sprintf(\"%v\", err.Error())\n")
+		_, _ = fmt.Fprint(buffer, "\t}\n")
+
+		// Gera a declaração do objeto de resposta
+		_, _ = fmt.Fprint(buffer, "\t_response := "+createParamsResponse(actionModel.Response)+"{\n")
+
+		/*if resultModel.isList {
 			_, _ = fmt.Fprint(buffer, "\t\tResult:      result,\n")
 		} else {
 			_, _ = fmt.Fprint(buffer, "\t\tResult:      &result,\n")
+		}*/
+
+		// Adiciona a informação sobre o erro da ação ao objeto de resposta
+		_, _ = fmt.Fprint(buffer, "\t\tError: \t\t &_error,\n")
+
+		// Adiciona a informação sobre o sucesso da ação ao objeto de resposta
+		_, _ = fmt.Fprint(buffer, "\t\tResult:      _result,\n")
+
+		// Adiciona a informação sobre o sucesso da ação ao objeto de resposta
+		_, _ = fmt.Fprint(buffer, "\t\tSuccess:     _success,\n")
+
+		// Adiciona a informação sobre o tempo de execução da ação ao objeto de resposta
+		_, _ = fmt.Fprint(buffer, "\t\tElapsedTime: time.Since(_timeStart).String(),\n")
+		_, _ = fmt.Fprint(buffer, "\t}\n")
+
+		// Verifica se é do tipo subscription para configurar retorno
+		if actionModel.Type == "subscription" {
+			_, _ = fmt.Fprint(buffer, "\tch := make(chan *model.KdldnTimeResponse)\n")
+			_, _ = fmt.Fprint(buffer, "\tch <- &_response\n")
+			_, _ = fmt.Fprint(buffer, "\treturn ch, nil\n")
+		} else {
+			// Retorna o objeto de resposta e um erro, caso ocorra
+			_, _ = fmt.Fprint(buffer, "\treturn &_response, nil\n")
 		}
 
-		_, _ = fmt.Fprint(buffer, "\t\tSuccess:     success,\n")
-		_, _ = fmt.Fprint(buffer, "\t\tElapsedTime: time.Since(timeStart).String(),\n")
-		_, _ = fmt.Fprint(buffer, "\t}\n")
-		_, _ = fmt.Fprint(buffer, "\treturn &response, nil\n")
 		_, _ = fmt.Fprint(buffer, "}\n\n")
 	}
 
@@ -756,7 +958,7 @@ func resultCheckType(resultModel ResultModel) string {
 			defaultType = "model." + resultModel.Name
 		}
 	}
-	result := "\tresult := " + defaultType + "{}\n"
+	result := "\t_result := " + defaultType + "{}\n"
 	return result
 }
 
@@ -845,6 +1047,7 @@ func typeRequerid(model ArgModel) string {
 func main() {
 	createFileModel("query")
 	createFileModel("mutation")
+	//createFileModel("subscription")
 	createListResult()
 	renderResolver()
 	renderService()

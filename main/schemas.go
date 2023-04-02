@@ -58,6 +58,26 @@ func renderMutation(buffer *bytes.Buffer) *bytes.Buffer {
 			_, _ = fmt.Fprint(buffer, result)
 		}
 	}
+	_, _ = fmt.Fprint(buffer, "}\n\r")
+	return buffer
+}
+
+func renderSubscription(buffer *bytes.Buffer) *bytes.Buffer {
+	// Renderiza as mutações GraphQL em um buffer e retorna o buffer
+	_, _ = fmt.Fprint(buffer, "type Subscription {\n")
+	files, _ := findFiles("./", "subscription.graphqls")
+	for _, file := range files {
+		content, err := os.ReadFile(file)
+		if err == nil {
+			text := string(content)
+			// Encontra a definição da mutação GraphQL no arquivo e a adiciona ao buffer
+			re := regexp.MustCompile(`type\s[\s\S].*\s\{`)
+			index := re.FindAllIndex(content, 1)
+			pos := index[0][1]
+			result := text[pos+1 : len(text)-1]
+			_, _ = fmt.Fprint(buffer, result)
+		}
+	}
 	_, _ = fmt.Fprint(buffer, "}")
 	return buffer
 }
@@ -67,6 +87,7 @@ func main() {
 	buffer := bytes.NewBuffer(nil)
 	buffer = renderQuery(buffer)
 	buffer = renderMutation(buffer)
+	buffer = renderSubscription(buffer)
 
 	// Escreve o esquema GraphQL resultante no arquivo schema.graphqls
 	if err := os.WriteFile("graph/schema.graphqls", buffer.Bytes(), 0644); err != nil {
