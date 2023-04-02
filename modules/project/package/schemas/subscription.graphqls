@@ -1,0 +1,9 @@
+#------------------------------
+# subscription
+#------------------------------
+type KdldnSubscription {
+    """
+    `currentTime` will return a stream of `Time` objects.
+    """
+    messages: KdldnTimeResponse!
+}

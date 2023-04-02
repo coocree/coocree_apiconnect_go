@@ -1,0 +1,11 @@
+#------------------------------------------------------------
+#
+# input
+#
+#------------------------------------------------------------
+
+"""Registra novo documento"""
+input DocumentInput {
+    """Identificador do documento"""
+    id: Int!
+}

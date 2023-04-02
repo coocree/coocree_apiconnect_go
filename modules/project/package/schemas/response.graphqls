@@ -1,0 +1,20 @@
+#------------------------------------------------------------
+#
+# response
+#
+#------------------------------------------------------------
+"""Retorna um documento de resposta"""
+type DocumentResponse {
+    result: DocumentResult!
+    success: Boolean!
+    elapsedTime: String!
+    error: String
+}
+
+"""Retorna uma lista de documentos de resposta"""
+type DocumentsResponse {
+    result: [DocumentResult!]!
+    success: Boolean!
+    elapsedTime: String!
+    error: String
+}

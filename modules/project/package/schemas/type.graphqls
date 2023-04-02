@@ -1,0 +1,5 @@
+type Message {
+    id: Int!
+    user: String!
+    content: String!
+}

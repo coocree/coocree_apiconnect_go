@@ -1,0 +1,15 @@
+#------------------------------------------------------------
+#
+# mutation
+#
+#------------------------------------------------------------
+type ProjectMutation {
+    """Cria um documento"""
+    documentCreate(input: DocumentInput!): DocumentResponse!
+
+    """Atualiza um documento"""
+    documentEdit(filter:DocumentFilter input: DocumentInput!): DocumentResponse!
+
+    """Deleta um documento"""
+    documentDelete(filter:DocumentFilter): DocumentResponse!
+}

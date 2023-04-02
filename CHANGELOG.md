@@ -26,6 +26,7 @@
 
 ### 1.0.8
 * Implementado mysql client
-* 
+ 
 ### 1.0.9
 * Atualizados os geradores de código main.resolver e main.schemas
+* Adicionado main.txt exemplo de arquivo de configuração

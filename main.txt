@@ -1,0 +1,141 @@
+package main
+
+import (
+	"coocree_kdl_go_apiconnect/graph"
+	"fmt"
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/coocree/coocree_apiconnect_go/config"
+	"github.com/coocree/coocree_apiconnect_go/middleware"
+	"github.com/coocree/coocree_apiconnect_go/mongo"
+	"github.com/coocree/coocree_apiconnect_go/mysql"
+	"github.com/gorilla/websocket"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
+	"github.com/go-chi/chi"
+	"github.com/rs/cors"
+)
+
+//go:generate go run main/schemas.go
+//go:generate go run main/resolvers.go
+//go:generate go mod tidy
+//go:generate go run github.com/99designs/gqlgen generate
+
+func loadEnv() string {
+	// Carrega as variáveis de ambiente do arquivo .env usando a função LoadEnvVars() do pacote config
+	err := config.LoadEnv()
+	if err != nil {
+		// Se houver um erro ao carregar as variáveis de ambiente, imprime uma mensagem de erro e sai com um status de erro
+		fmt.Println("Erro ao carregar as variáveis de ambiente.")
+		os.Exit(1)
+	}
+
+	// Obtém a porta para o servidor a partir da variável de ambiente PORT
+	port := os.Getenv("PORT")
+	if port == "" {
+		panic("PORT não definido")
+	}
+
+	return port
+}
+
+func connectMongo() *mongo.MongoDB {
+	// Conectar ao MongoDB
+	mongoURI := os.Getenv("MONGODB_URI")
+	if mongoURI == "" {
+		db, err := mongo.NewDB(mongoURI)
+		if err != nil {
+			log.Fatalf("Falha ao conectar-se ao MongoDB: %v", err)
+		}
+
+		defer func(db *mongo.MongoDB) {
+			err := db.Close()
+			if err != nil {
+				log.Fatalf("Falha ao fechar a conexão com o MongoDB: %v", err)
+			}
+		}(db)
+
+		return db
+	} else {
+		fmt.Println("MONGODB_URI não definido")
+	}
+	return nil
+}
+
+func connectMysql() *mysql.MysqlDB {
+	// Conectar ao Mysql
+	mysqlURI := os.Getenv("MYSQL_URI")
+
+	fmt.Println("mysqlURI: ", mysqlURI)
+
+	if mysqlURI != "" {
+		db, err := mysql.NewDB(mysqlURI)
+		if err != nil {
+			log.Fatalf("Falha ao conectar-se ao MySQL: %v", err)
+		}
+
+		return db
+	} else {
+		fmt.Println("MYSQL_URI não definido")
+	}
+	return nil
+}
+
+func main() {
+	//Carrega as variáveis de ambiente do arquivo .env
+	port := loadEnv()
+
+	// Configura resolver com as conexões
+	resolver := &graph.Resolver{
+		//MongoDB: connectMongo(),
+		MysqlDB: connectMysql(),
+	}
+
+	// Cria um novo roteador HTTP usando a biblioteca Chi
+	router := chi.NewRouter()
+
+	// Adiciona o middleware de sessão
+	router.Use(middleware.Session())
+
+	// Adiciona o middleware CORS em torno de todas as solicitações
+	// Consulte https://github.com/rs/cors para ver todas as opções disponíveis
+	router.Use(cors.New(cors.Options{
+		//TODO:: Configurar o CORS com limitação de acesso para o domínio da aplicação
+		AllowedOrigins:   []string{"*"},
+		AllowCredentials: true,
+		Debug:            true,
+		AllowedHeaders:   []string{"Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"},
+	}).Handler)
+
+	// Cria um novo servidor GraphQL usando o esquema executável gerado
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
+	srv.AddTransport(transport.POST{})
+	srv.AddTransport(transport.Websocket{
+		KeepAlivePingInterval: 10 * time.Second,
+		Upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		},
+	})
+	srv.Use(extension.Introspection{})
+	/*srv.AroundFields(func(ctx context.Context, next graphql.Resolver) (res interface{}, err error) {
+		rc := graphql.GetFieldContext(ctx)
+		fmt.Println("Entered", rc.Object, rc.Field.Name)
+		res, err = next(ctx)
+		fmt.Println("Left", rc.Object, rc.Field.Name, "=>", res, err)
+		return res, err
+	})*/
+
+	// Manipulador GraphQL
+	router.Handle("/api-connect", srv)
+
+	log.Printf("connect to http://localhost:%s/api-connect", port)
+
+	// Inicia o servidor HTTP na porta especificada
+	log.Fatal(http.ListenAndServe(":"+port, router))
+}

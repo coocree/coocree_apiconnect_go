@@ -1,0 +1,11 @@
+#------------------------------------------------------------
+#
+# filter
+#
+#------------------------------------------------------------
+
+"""Filtro de documento"""
+input DocumentFilter {
+    """Identificador do documento"""
+    id: String!
+}

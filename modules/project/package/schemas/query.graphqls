@@ -1,0 +1,12 @@
+#------------------------------------------------------------
+#
+# query
+#
+#------------------------------------------------------------
+type ProjectQuery {
+    """Recupera um único documento"""
+    projectDocument(filter:DocumentFilter): DocumentResponse!
+
+    """Recupera uma lista de documentos"""
+    projectDocuments(filter:DocumentFilter): DocumentsResponse!
+}

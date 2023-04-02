@@ -1,0 +1,10 @@
+#------------------------------------------------------------
+#
+# result
+#
+#------------------------------------------------------------
+"""Retorna dados do documento"""
+type DocumentResult  {
+    """Identificador do documento"""
+    id: String!
+}
